@@ -1,8 +1,16 @@
 import { registerRootComponent } from 'expo';
-
+import { NativeModules, Platform } from 'react-native';
+import { registerWidgetTaskHandler } from 'react-native-android-widget';
 import App from './App';
+import { widgetHandler } from './src/widgets/widgetHandler';
 
-// registerRootComponent calls AppRegistry.registerComponent('main', () => App);
-// It also ensures that whether you load the app in Expo Go or in a native build,
-// the environment is set up appropriately
+// Safely register widget task handler on Android
+if (Platform.OS === 'android' && Boolean(NativeModules.AndroidWidget)) {
+  try {
+    registerWidgetTaskHandler(widgetHandler);
+  } catch {
+    // Graceful fallback for Expo Go
+  }
+}
+
 registerRootComponent(App);

@@ -10,8 +10,9 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.githubmobilewidgets",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#0d1117",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -20,6 +21,38 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "ContributionGraph",
+              "label": "GitHub Contributions Heatmap",
+              "description": "Interactive GitHub contribution matrix with streak and stats",
+              "minWidth": "320dp",
+              "minHeight": "150dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "ProfileCard",
+              "label": "GitHub Profile & Stats",
+              "description": "Profile summary with repos, stars, followers and bio",
+              "minWidth": "160dp",
+              "minHeight": "160dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ],
+      "expo-font"
+    ]
   }
 }
