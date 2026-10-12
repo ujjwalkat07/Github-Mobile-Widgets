@@ -5,7 +5,12 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0d1117"
+    },
     "ios": {
       "supportsTablet": true
     },
@@ -43,7 +48,7 @@
               "label": "GitHub Profile & Stats",
               "description": "Profile summary with repos, stars, followers and bio",
               "minWidth": "260dp",
-              "minHeight": "64dp",
+              "minHeight": "80dp",
               "targetCellWidth": 4,
               "targetCellHeight": 1,
               "resizeMode": "horizontal|vertical",
@@ -52,7 +57,19 @@
           ]
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0d1117",
+          "image": "./assets/splash-icon.png",
+          "dark": {
+            "image": "./assets/splash-icon.png",
+            "backgroundColor": "#0d1117"
+          },
+          "imageWidth": 180
+        }
+      ]
     ],
     "extra": {
       "eas": {

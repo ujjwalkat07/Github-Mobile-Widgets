@@ -14,6 +14,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import * as SplashScreen from 'expo-splash-screen';
 
 import { GitHubUser, ContributionData, WidgetType, WidgetThemeId, WidgetTheme } from './src/types';
 import { getTheme } from './src/themes';
@@ -25,6 +26,13 @@ import { Header } from './src/components/Header';
 import { WidgetPreview } from './src/components/WidgetPreview';
 import { HeatmapChart } from './src/components/HeatmapChart';
 import { ThemePicker } from './src/components/ThemePicker';
+
+// Keep splash screen visible while loading initial state
+SplashScreen.preventAutoHideAsync().catch(() => {});
+SplashScreen.setOptions({
+  duration: 400,
+  fade: true,
+});
 
 export default function App() {
   const [usernameInput, setUsernameInput] = useState<string>('');
@@ -70,20 +78,27 @@ export default function App() {
   // Initial load
   useEffect(() => {
     (async () => {
-      const savedUser = await AppStorage.getUsername();
-      const savedTheme = await AppStorage.getThemeId();
-      setActiveUsername(savedUser);
-      setUsernameInput(savedUser);
-      setThemeId(savedTheme);
+      try {
+        const savedUser = await AppStorage.getUsername();
+        const savedTheme = await AppStorage.getThemeId();
+        setActiveUsername(savedUser);
+        setUsernameInput(savedUser);
+        setThemeId(savedTheme);
 
-      // Check cache first for instant render
-      const cached = await AppStorage.getCachedData(savedUser);
-      if (cached) {
-        setUser(cached.user);
-        setContributions(cached.contributions);
+        // Check cache first for instant render
+        const cached = await AppStorage.getCachedData(savedUser);
+        if (cached) {
+          setUser(cached.user);
+          setContributions(cached.contributions);
+        }
+
+        // Hide splash screen so user sees cached UI immediately
+        await SplashScreen.hideAsync().catch(() => {});
+
+        await fetchLiveGitHubData(savedUser);
+      } catch {
+        await SplashScreen.hideAsync().catch(() => {});
       }
-
-      await fetchLiveGitHubData(savedUser);
     })();
   }, [fetchLiveGitHubData]);
 
