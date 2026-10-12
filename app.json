@@ -6,11 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0d1117"
-    },
     "ios": {
       "supportsTablet": true
     },
@@ -48,7 +43,7 @@
               "label": "GitHub Profile & Stats",
               "description": "Profile summary with repos, stars, followers and bio",
               "minWidth": "260dp",
-              "minHeight": "80dp",
+              "minHeight": "64dp",
               "targetCellWidth": 4,
               "targetCellHeight": 1,
               "resizeMode": "horizontal|vertical",

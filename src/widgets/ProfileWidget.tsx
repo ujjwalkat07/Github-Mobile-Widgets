@@ -33,17 +33,17 @@ export function ProfileWidget({
 
   // Sizing calculations based on container dimensions
   const w = width || 340;
-  const h = height || 100;
+  const h = height || 90;
 
   const isNarrow = w < 240;
-  const cardPadding = Math.min(18, Math.max(12, Math.floor(h * 0.12)));
-  const nameFontSize = Math.min(22, Math.max(16, Math.floor(h * 0.20)));
-  const sublineFontSize = Math.min(12.5, Math.max(10, Math.floor(h * 0.115)));
+  const cardPadding = Math.min(14, Math.max(8, Math.floor(h * 0.09)));
+  const nameFontSize = Math.min(18, Math.max(13, Math.floor(h * 0.15)));
+  const sublineFontSize = Math.min(10.5, Math.max(8, Math.floor(h * 0.08)));
 
-  // Scaled stats typography
-  const statNumFontSize = Math.min(26, Math.max(19, Math.floor(h * 0.25)));
-  const statLblFontSize = Math.min(11, Math.max(8.5, Math.floor(h * 0.105)));
-  const headerMarginBottom = Math.min(10, Math.max(4, Math.floor(h * 0.07)));
+  // Reduced stats font sizes
+  const statNumFontSize = Math.min(18, Math.max(13, Math.floor(h * 0.16)));
+  const statLblFontSize = Math.min(9.5, Math.max(7.5, Math.floor(h * 0.075)));
+  const headerMarginBottom = Math.min(8, Math.max(3, Math.floor(h * 0.06)));
 
   return (
     <FlexWidget

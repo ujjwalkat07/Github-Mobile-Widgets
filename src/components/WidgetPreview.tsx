@@ -328,9 +328,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   profileCard: {
-    paddingVertical: 14,
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    gap: 10,
+    gap: 8,
   },
   masterHeader: {
     gap: 2,
@@ -341,16 +341,16 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   masterName: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '800',
     letterSpacing: -0.3,
   },
   masterUsername: {
-    fontSize: 14.5,
+    fontSize: 13,
     fontWeight: '700',
   },
   masterSubline: {
-    fontSize: 11.5,
+    fontSize: 10.5,
     fontWeight: '500',
   },
   masterHeatmapSection: {
@@ -411,12 +411,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   profileBigStatNumber: {
-    fontSize: 25,
+    fontSize: 19,
     fontWeight: '800',
     letterSpacing: -0.5,
   },
   profileBigStatLabel: {
-    fontSize: 10.5,
+    fontSize: 9.5,
     marginTop: 2,
     fontWeight: '500',
   },
