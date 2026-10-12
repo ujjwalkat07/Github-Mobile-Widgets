@@ -105,31 +105,84 @@ export function getSinceYear(createdAt?: string | null): number {
   }
 }
 
+function getDayOfWeek(dateStr: string): number {
+  if (!dateStr) return 0;
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2], 10);
+    return new Date(Date.UTC(year, month, day)).getUTCDay();
+  }
+  return new Date(dateStr).getDay();
+}
+
+export function getContributionWeeks(
+  contributions: ContributionDay[]
+): (ContributionDay | undefined)[][] {
+  if (!contributions || contributions.length === 0) return [];
+
+  const weeks: (ContributionDay | undefined)[][] = [];
+  let currentWeek: (ContributionDay | undefined)[] = new Array(7).fill(undefined);
+
+  for (const day of contributions) {
+    if (!day || !day.date) continue;
+    const dayOfWeek = getDayOfWeek(day.date);
+
+    if (dayOfWeek === 0 && currentWeek.some((d) => d !== undefined)) {
+      weeks.push(currentWeek);
+      currentWeek = new Array(7).fill(undefined);
+    }
+
+    currentWeek[dayOfWeek] = day;
+  }
+
+  if (currentWeek.some((d) => d !== undefined)) {
+    weeks.push(currentWeek);
+  }
+
+  return weeks;
+}
+
+export function getRecentContributionWeeks(
+  contributions: ContributionDay[],
+  columns: number
+): (ContributionDay | undefined)[][] {
+  const allWeeks = getContributionWeeks(contributions);
+  const recentWeeks = allWeeks.slice(-columns);
+
+  while (recentWeeks.length < columns) {
+    recentWeeks.unshift(new Array(7).fill(undefined));
+  }
+
+  return recentWeeks;
+}
+
 export function getMonthHeaders(
   contributions: ContributionDay[],
   columns: number
 ): { col: number; label: string }[] {
-  const requiredDays = columns * 7;
-  const recentDays = contributions.slice(-requiredDays);
-  while (recentDays.length < requiredDays) {
-    recentDays.unshift({ date: '', count: 0, level: 0 });
-  }
+  const recentWeeks = getRecentContributionWeeks(contributions, columns);
 
   const result: { col: number; label: string }[] = [];
   let lastMonth = '';
 
   for (let col = 0; col < columns; col++) {
-    for (let row = 0; row < 7; row++) {
-      const idx = col * 7 + row;
-      const d = recentDays[idx];
-      if (d && d.date) {
-        const m = new Date(d.date).toLocaleDateString('en-US', { month: 'short' });
-        if (m !== lastMonth) {
-          lastMonth = m;
-          result.push({ col, label: m });
-        }
-        break;
-      }
+    const week = recentWeeks[col];
+    const validDay = week.find((d) => d && d.date);
+    if (!validDay || !validDay.date) continue;
+
+    const parts = validDay.date.split('-');
+    if (parts.length < 2) continue;
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2] || '1', 10);
+    const dateObj = new Date(Date.UTC(year, month, day));
+    const m = dateObj.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+
+    if (m !== lastMonth) {
+      lastMonth = m;
+      result.push({ col, label: m });
     }
   }
 
@@ -153,24 +206,24 @@ export function generateHeatmapSvg({
   radius?: number;
   width?: number;
 }): string {
-  const requiredDays = columns * 7;
-  const recentDays = contributions.slice(-requiredDays);
+  const recentWeeks = getRecentContributionWeeks(contributions, columns);
 
-  while (recentDays.length < requiredDays) {
-    recentDays.unshift({ date: '', count: 0, level: 0 });
-  }
-
-  const finalCellSize = cellSize || (width ? Math.max(2, Math.floor((width - (columns - 1) * cellGap) / columns)) : 11);
+  const finalCellSize =
+    cellSize || (width ? Math.max(2, Math.floor((width - (columns - 1) * cellGap) / columns)) : 11);
   const calculatedWidth = width || (columns * finalCellSize + (columns - 1) * cellGap);
   const actualHeight = 7 * finalCellSize + 6 * cellGap;
 
   let rects = '';
 
   for (let col = 0; col < columns; col++) {
+    const week = recentWeeks[col];
     for (let row = 0; row < 7; row++) {
-      const idx = col * 7 + row;
-      const day = recentDays[idx];
-      const level = day ? day.level : 0;
+      const day = week[row];
+      if (!day || !day.date) {
+        continue;
+      }
+
+      const level = day.level >= 0 && day.level <= 4 ? day.level : 0;
       const color = levelColors[level] || levelColors[0];
       const x = col * (finalCellSize + cellGap);
       const y = row * (finalCellSize + cellGap);

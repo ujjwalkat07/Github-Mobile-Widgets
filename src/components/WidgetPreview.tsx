@@ -73,6 +73,7 @@ export function WidgetPreview({
         <View
           style={[
             styles.masterCard,
+            styles.profileCard,
             {
               backgroundColor: theme.cardBackground,
               borderColor: theme.borderColor,
@@ -325,6 +326,11 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     padding: 16,
     gap: 12,
+  },
+  profileCard: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    gap: 8,
   },
   masterHeader: {
     gap: 2,

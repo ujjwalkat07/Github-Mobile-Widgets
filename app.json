@@ -43,9 +43,9 @@
               "label": "GitHub Profile & Stats",
               "description": "Profile summary with repos, stars, followers and bio",
               "minWidth": "260dp",
-              "minHeight": "100dp",
+              "minHeight": "64dp",
               "targetCellWidth": 4,
-              "targetCellHeight": 2,
+              "targetCellHeight": 1,
               "resizeMode": "horizontal|vertical",
               "updatePeriodMillis": 1800000
             }

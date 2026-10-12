@@ -93,7 +93,7 @@ export function MasterCardWidget({
         borderColor: theme.borderColor,
         padding: cardPadding,
         flexDirection: 'column',
-        justifyContent: 'flex-start',
+        justifyContent: 'center',
       }}
     >
       {/* 1. Header Section: Name + Username side-by-side */}

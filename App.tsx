@@ -25,7 +25,6 @@ import { Header } from './src/components/Header';
 import { WidgetPreview } from './src/components/WidgetPreview';
 import { HeatmapChart } from './src/components/HeatmapChart';
 import { ThemePicker } from './src/components/ThemePicker';
-import { MasterCardWidget } from './src/widgets/MasterCardWidget';
 
 export default function App() {
   const [usernameInput, setUsernameInput] = useState<string>('');

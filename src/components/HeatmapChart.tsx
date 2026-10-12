@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -10,10 +10,39 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { ContributionData, ContributionDay, WidgetTheme } from '../types';
+import { getContributionWeeks } from '../api';
 
 interface Props {
   contributions: ContributionData;
   theme: WidgetTheme;
+}
+
+function computeMonthLabels(weeks: (ContributionDay | undefined)[][]): (string | null)[] {
+  let lastMonth = '';
+  const labels: (string | null)[] = [];
+  for (const week of weeks) {
+    const validDay = week.find((d) => d && d.date);
+    if (!validDay || !validDay.date) {
+      labels.push(null);
+      continue;
+    }
+    const parts = validDay.date.split('-');
+    if (parts.length < 2) {
+      labels.push(null);
+      continue;
+    }
+    const dateObj = new Date(
+      Date.UTC(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2] || '1', 10))
+    );
+    const m = dateObj.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+    if (m !== lastMonth) {
+      lastMonth = m;
+      labels.push(m);
+    } else {
+      labels.push(null);
+    }
+  }
+  return labels;
 }
 
 export function HeatmapChart({ contributions, theme }: Props) {
@@ -21,26 +50,12 @@ export function HeatmapChart({ contributions, theme }: Props) {
   const [scrollRatio, setScrollRatio] = useState<number>(1);
   const chartScrollRef = useRef<ScrollView>(null);
 
-  const days = contributions.contributions;
-  const columnsCount = Math.ceil(days.length / 7);
-  const weeks: ContributionDay[][] = [];
-
-  for (let c = 0; c < columnsCount; c++) {
-    weeks.push(days.slice(c * 7, c * 7 + 7));
-  }
+  const weeks = useMemo(() => {
+    return getContributionWeeks(contributions.contributions);
+  }, [contributions.contributions]);
 
   // Calculate month labels above weeks
-  let lastMonth = '';
-  const monthLabels: (string | null)[] = weeks.map((week) => {
-    const validDay = week.find((d) => d && d.date);
-    if (!validDay) return null;
-    const m = new Date(validDay.date).toLocaleDateString('en-US', { month: 'short' });
-    if (m !== lastMonth) {
-      lastMonth = m;
-      return m;
-    }
-    return null;
-  });
+  const monthLabels = useMemo(() => computeMonthLabels(weeks), [weeks]);
 
   const handleCellPress = (day: ContributionDay) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -134,6 +149,14 @@ export function HeatmapChart({ contributions, theme }: Props) {
             {weeks.map((week, colIdx) => (
               <View key={colIdx} style={styles.gridColumn}>
                 {week.map((day, rowIdx) => {
+                  if (!day || !day.date) {
+                    return (
+                      <View
+                        key={rowIdx}
+                        style={[styles.cell, { backgroundColor: 'transparent' }]}
+                      />
+                    );
+                  }
                   const isSelected = selectedDay?.date === day.date;
                   return (
                     <TouchableOpacity

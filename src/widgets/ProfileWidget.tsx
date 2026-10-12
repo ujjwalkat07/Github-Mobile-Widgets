@@ -16,7 +16,7 @@ export function ProfileWidget({
   contributions,
   theme,
   width = 340,
-  height = 140,
+  height = 90,
 }: Props) {
   const currentYear = new Date().getFullYear();
   const yearTotal =
@@ -33,16 +33,17 @@ export function ProfileWidget({
 
   // Sizing calculations based on container dimensions
   const w = width || 340;
-  const h = height || 140;
+  const h = height || 90;
 
   const isNarrow = w < 240;
-  const cardPadding = Math.min(18, Math.max(12, Math.floor(h * 0.09)));
-  const nameFontSize = Math.min(20, Math.max(15, Math.floor(h * 0.12)));
-  const sublineFontSize = Math.min(11, Math.max(9, Math.floor(h * 0.065)));
+  const cardPadding = Math.min(14, Math.max(8, Math.floor(h * 0.09)));
+  const nameFontSize = Math.min(18, Math.max(13, Math.floor(h * 0.15)));
+  const sublineFontSize = Math.min(10.5, Math.max(8, Math.floor(h * 0.08)));
 
   // Reduced stats font sizes
-  const statNumFontSize = Math.min(20, Math.max(15, Math.floor(h * 0.13)));
-  const statLblFontSize = Math.min(10, Math.max(8, Math.floor(h * 0.058)));
+  const statNumFontSize = Math.min(18, Math.max(13, Math.floor(h * 0.16)));
+  const statLblFontSize = Math.min(9.5, Math.max(7.5, Math.floor(h * 0.075)));
+  const headerMarginBottom = Math.min(8, Math.max(3, Math.floor(h * 0.06)));
 
   return (
     <FlexWidget
@@ -51,12 +52,12 @@ export function ProfileWidget({
         width: 'match_parent',
         height: 'match_parent',
         backgroundColor: theme.cardBackground,
-        borderRadius: 20,
+        borderRadius: 16,
         borderWidth: 1.5,
         borderColor: theme.borderColor,
         padding: cardPadding,
         flexDirection: 'column',
-        justifyContent: 'flex-start',
+        justifyContent: 'center',
       }}
     >
       {/* 1. Header: Name & Username side by side */}
@@ -64,7 +65,7 @@ export function ProfileWidget({
         style={{
           flexDirection: 'column',
           width: 'match_parent',
-          marginBottom: 14,
+          marginBottom: headerMarginBottom,
         }}
       >
         <FlexWidget
