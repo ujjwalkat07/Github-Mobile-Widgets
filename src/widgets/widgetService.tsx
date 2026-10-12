@@ -7,7 +7,7 @@ import {
 import { AppStorage } from '../storage';
 import { GitHubApi } from '../api';
 import { getTheme } from '../themes';
-import { ContributionWidget } from './ContributionWidget';
+import { MasterCardWidget } from './MasterCardWidget';
 import { ProfileWidget } from './ProfileWidget';
 import { WidgetType } from '../types';
 
@@ -61,7 +61,7 @@ export const WidgetService = {
       await requestWidgetUpdate({
         widgetName: 'ContributionGraph',
         renderWidget: (info) => (
-          <ContributionWidget
+          <MasterCardWidget
             user={user}
             contributions={contributions}
             theme={theme}
@@ -73,11 +73,13 @@ export const WidgetService = {
 
       await requestWidgetUpdate({
         widgetName: 'ProfileCard',
-        renderWidget: () => (
+        renderWidget: (info) => (
           <ProfileWidget
             user={user}
             contributions={contributions}
             theme={theme}
+            width={info.width}
+            height={info.height}
           />
         ),
       });

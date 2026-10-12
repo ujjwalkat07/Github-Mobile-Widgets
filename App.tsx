@@ -25,6 +25,7 @@ import { Header } from './src/components/Header';
 import { WidgetPreview } from './src/components/WidgetPreview';
 import { HeatmapChart } from './src/components/HeatmapChart';
 import { ThemePicker } from './src/components/ThemePicker';
+import { MasterCardWidget } from './src/widgets/MasterCardWidget';
 
 export default function App() {
   const [usernameInput, setUsernameInput] = useState<string>('');
@@ -294,21 +295,19 @@ export default function App() {
 
           {/* Android Widget Section */}
           {user && contributions && (
-            <View style={[styles.card, { backgroundColor: activeTheme.cardBackground, borderColor: activeTheme.borderColor }]}>
-              <Text style={[styles.cardTitle, { color: activeTheme.textPrimary }]}>
-                Android Widgets
-              </Text>
-              <Text style={[styles.cardDescription, { color: activeTheme.textSecondary }]}>
-                Choose a widget to preview and add to your Android home screen.
-              </Text>
-
+            <View style={styles.widgetSection}>
               {/* Segmented Switcher */}
-              <View style={[styles.segmentedControl, { backgroundColor: activeTheme.background, borderColor: activeTheme.borderColor }]}>
+              <View
+                style={[
+                  styles.segmentedControl,
+                  { backgroundColor: activeTheme.cardBackground, borderColor: activeTheme.borderColor },
+                ]}
+              >
                 <TouchableOpacity
                   style={[
                     styles.segmentButton,
                     selectedWidget === 'ContributionGraph' && {
-                      backgroundColor: activeTheme.cardBackground,
+                      backgroundColor: activeTheme.background,
                       borderColor: activeTheme.borderColor,
                     },
                   ]}
@@ -331,7 +330,7 @@ export default function App() {
                       },
                     ]}
                   >
-                    Contribution Heatmap
+                    Heatmap Card
                   </Text>
                 </TouchableOpacity>
 
@@ -339,7 +338,7 @@ export default function App() {
                   style={[
                     styles.segmentButton,
                     selectedWidget === 'ProfileCard' && {
-                      backgroundColor: activeTheme.cardBackground,
+                      backgroundColor: activeTheme.background,
                       borderColor: activeTheme.borderColor,
                     },
                   ]}
@@ -367,7 +366,7 @@ export default function App() {
                 </TouchableOpacity>
               </View>
 
-              {/* Live Preview */}
+              {/* Actual Widget Display & Add to Home Option */}
               <WidgetPreview
                 widgetType={selectedWidget}
                 user={user}
@@ -559,12 +558,15 @@ const styles = StyleSheet.create({
     width: 1,
     height: 22,
   },
+  widgetSection: {
+    gap: 10,
+  },
   segmentedControl: {
     flexDirection: 'row',
     borderRadius: 10,
     borderWidth: 1,
     padding: 3,
-    marginBottom: 8,
+    marginBottom: 4,
     gap: 4,
   },
   segmentButton: {

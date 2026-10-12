@@ -31,8 +31,8 @@
               "name": "ContributionGraph",
               "label": "GitHub Contributions Heatmap",
               "description": "Interactive GitHub contribution matrix with streak and stats",
-              "minWidth": "320dp",
-              "minHeight": "150dp",
+              "minWidth": "260dp",
+              "minHeight": "100dp",
               "targetCellWidth": 4,
               "targetCellHeight": 2,
               "resizeMode": "horizontal|vertical",
@@ -42,9 +42,9 @@
               "name": "ProfileCard",
               "label": "GitHub Profile & Stats",
               "description": "Profile summary with repos, stars, followers and bio",
-              "minWidth": "160dp",
-              "minHeight": "160dp",
-              "targetCellWidth": 2,
+              "minWidth": "260dp",
+              "minHeight": "100dp",
+              "targetCellWidth": 4,
               "targetCellHeight": 2,
               "resizeMode": "horizontal|vertical",
               "updatePeriodMillis": 1800000
@@ -53,6 +53,12 @@
         }
       ],
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "5c7ca4dc-e5d8-4b95-b40f-6f1ef2ff87f9"
+      }
+    },
+    "owner": "ujjwalkat07"
   }
 }

@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
   ScrollView,
   NativeSyntheticEvent,
   NativeScrollEvent,
@@ -12,14 +11,14 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { GitHubUser, ContributionData, WidgetTheme, WidgetType } from '../types';
-import { formatNumber, generateHeatmapSvg } from '../api';
+import { formatNumber, generateHeatmapSvg, getActiveDaysCount, getMonthHeaders } from '../api';
 import { SvgXml } from 'react-native-svg';
 
-const FULL_YEAR_WEEKS = 53;
-const CELL_SIZE = 11;
-const CELL_GAP = 3;
-const FULL_YEAR_WIDTH = FULL_YEAR_WEEKS * CELL_SIZE + (FULL_YEAR_WEEKS - 1) * CELL_GAP; // ~739px
-const FULL_YEAR_HEIGHT = 7 * CELL_SIZE + 6 * CELL_GAP; // 95px
+const SIX_MONTHS_WEEKS = 26;
+const CELL_SIZE = 10;
+const CELL_GAP = 2.5;
+const SIX_MONTHS_WIDTH = SIX_MONTHS_WEEKS * CELL_SIZE + (SIX_MONTHS_WEEKS - 1) * CELL_GAP; // ~323px
+const SIX_MONTHS_HEIGHT = 7 * CELL_SIZE + 6 * CELL_GAP; // 85px
 
 interface Props {
   widgetType: WidgetType;
@@ -56,216 +55,199 @@ export function WidgetPreview({
   };
 
   const renderWidgetContent = () => {
-    if (widgetType === 'ContributionGraph') {
-      const currentYear = new Date().getFullYear();
-      const yearTotal =
-        contributions.total?.[currentYear.toString()] ||
-        contributions.total?.lastYear ||
-        contributions.contributions.reduce((a, b) => a + b.count, 0);
-
-      // 53 weeks = full 365-day year length
-      const svgContent = generateHeatmapSvg({
-        contributions: contributions.contributions,
-        levelColors: theme.levels,
-        columns: FULL_YEAR_WEEKS,
-        cellSize: CELL_SIZE,
-        cellGap: CELL_GAP,
-      });
-
-      return (
-        <View
-          style={[
-            styles.widgetCard,
-            {
-              backgroundColor: theme.cardBackground,
-              borderColor: theme.borderColor,
-            },
-          ]}
-        >
-          {/* Header */}
-          <View style={styles.widgetHeader}>
-            <View style={styles.headerLeft}>
-              {user.avatar_url && (
-                <Image source={{ uri: user.avatar_url }} style={styles.miniAvatar} />
-              )}
-              <Text style={[styles.widgetUserHandle, { color: theme.textPrimary }]}>
-                @{user.login}
-              </Text>
-              {contributions.committedToday && (
-                <View style={[styles.activeTag, { backgroundColor: theme.levels[3] }]}>
-                  <Text style={styles.activeTagText}>Active</Text>
-                </View>
-              )}
-            </View>
-
-            <View style={styles.headerRight}>
-              <Text style={[styles.streakPill, { color: theme.accent }]}>
-                🔥 {contributions.currentStreak}d
-              </Text>
-              <Text style={[styles.statMuted, { color: theme.textSecondary }]}>
-                {yearTotal.toLocaleString()} in {currentYear}
-              </Text>
-            </View>
-          </View>
-
-          {/* Full Year Heatmap Matrix with Bottom Scroll Bar */}
-          <View style={styles.heatmapBox}>
-            <ScrollView
-              ref={previewScrollRef}
-              horizontal
-              showsHorizontalScrollIndicator={true}
-              persistentScrollbar={true}
-              onScroll={handlePreviewScroll}
-              scrollEventThrottle={16}
-              contentContainerStyle={styles.heatmapScrollContainer}
-              onContentSizeChange={() => {
-                previewScrollRef.current?.scrollToEnd({ animated: false });
-                setScrollRatio(1);
-              }}
-            >
-              <SvgXml xml={svgContent} width={FULL_YEAR_WIDTH} height={FULL_YEAR_HEIGHT} />
-            </ScrollView>
-
-            {/* Bottom Scroll Bar Track */}
-            <View style={styles.scrollTrackWrapper}>
-              <View
-                style={[
-                  styles.scrollTrack,
-                  { backgroundColor: theme.background, borderColor: theme.borderColor },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.scrollThumb,
-                    {
-                      backgroundColor: theme.accent,
-                      left: `${scrollRatio * 75}%`,
-                    },
-                  ]}
-                />
-              </View>
-             
-            </View>
-          </View>
-
-          {/* Footer / Legend */}
-          <View style={styles.widgetFooter}>
-            <Text style={[styles.legendBrand, { color: theme.textSecondary }]}>
-              GitGlance
-            </Text>
-            <View style={styles.legendRow}>
-              <Text style={[styles.legendText, { color: theme.textSecondary }]}>Less </Text>
-              {theme.levels.map((c, i) => (
-                <View key={i} style={[styles.legendBox, { backgroundColor: c }]} />
-              ))}
-              <Text style={[styles.legendText, { color: theme.textSecondary }]}> More</Text>
-            </View>
-          </View>
-        </View>
-      );
-    }
-
-    // Complete Profile Card
     const currentYear = new Date().getFullYear();
     const yearTotal =
       contributions.total?.[currentYear.toString()] ||
       contributions.total?.lastYear ||
       contributions.contributions.reduce((acc, c) => acc + c.count, 0);
 
-    const metaItems = [
-      user.company ? `🏢 ${user.company}` : null,
-      user.location ? `📍 ${user.location}` : null,
-    ].filter(Boolean);
+    const activeDays = getActiveDaysCount(contributions.contributions);
+    const rawBio = (user.bio || [user.company, user.location].filter(Boolean).join(' • ') || '')
+      .replace(/[\r\n]+/g, ' ')
+      .trim();
+    const bioText = rawBio ? (rawBio.startsWith('💻') ? rawBio : `💻 ${rawBio}`) : '';
+
+    // Profile Card Preview (Image 2)
+    if (widgetType === 'ProfileCard') {
+      return (
+        <View
+          style={[
+            styles.masterCard,
+            {
+              backgroundColor: theme.cardBackground,
+              borderColor: theme.borderColor,
+            },
+          ]}
+        >
+          {/* 1. Header: Name + Username side by side */}
+          <View style={styles.masterHeader}>
+            <View style={styles.headerTitleRow}>
+              <Text style={[styles.masterName, { color: theme.textPrimary }]} numberOfLines={1}>
+                {user.name || user.login}
+              </Text>
+              <Text style={[styles.masterUsername, { color: theme.textSecondary }]} numberOfLines={1}>
+                @{user.login}
+              </Text>
+            </View>
+            {bioText ? (
+              <Text style={[styles.masterSubline, { color: theme.textSecondary }]} numberOfLines={1}>
+                {bioText}
+              </Text>
+            ) : null}
+          </View>
+
+          {/* 2. Stats in ONE row with reduced font size */}
+          <View style={styles.masterStatsRow}>
+            <View style={styles.masterStatCol}>
+              <Text style={[styles.profileBigStatNumber, { color: theme.textPrimary }]} numberOfLines={1}>
+                {formatNumber(yearTotal)}
+              </Text>
+              <Text style={[styles.profileBigStatLabel, { color: theme.textSecondary }]} numberOfLines={1}>
+                Contributions (1y)
+              </Text>
+            </View>
+
+            <View style={styles.masterStatCol}>
+              <Text style={[styles.profileBigStatNumber, { color: theme.textPrimary }]} numberOfLines={1}>
+                {formatNumber(user.public_repos)}
+              </Text>
+              <Text style={[styles.profileBigStatLabel, { color: theme.textSecondary }]} numberOfLines={1}>
+                Public repos
+              </Text>
+            </View>
+
+            <View style={styles.masterStatCol}>
+              <Text style={[styles.profileBigStatNumber, { color: theme.textPrimary }]} numberOfLines={1}>
+                {formatNumber(activeDays)}
+              </Text>
+              <Text style={[styles.profileBigStatLabel, { color: theme.textSecondary }]} numberOfLines={1}>
+                Active days
+              </Text>
+            </View>
+
+            <View style={styles.masterStatCol}>
+              <Text style={[styles.profileBigStatNumber, { color: theme.textPrimary }]} numberOfLines={1}>
+                {formatNumber(user.followers)}
+              </Text>
+              <Text style={[styles.profileBigStatLabel, { color: theme.textSecondary }]} numberOfLines={1}>
+                Followers
+              </Text>
+            </View>
+          </View>
+        </View>
+      );
+    }
+
+    // Heatmap Card Preview (Last 6 Months)
+    const columns = SIX_MONTHS_WEEKS; // 26 weeks
+    const svgContent = generateHeatmapSvg({
+      contributions: contributions.contributions,
+      levelColors: theme.levels,
+      columns,
+      cellSize: CELL_SIZE,
+      cellGap: CELL_GAP,
+      width: SIX_MONTHS_WIDTH,
+    });
+
+    const monthHeaders = getMonthHeaders(contributions.contributions, columns);
+    const monthMap: Record<number, string> = {};
+    monthHeaders.forEach((m) => {
+      monthMap[m.col] = m.label;
+    });
+    const colsArray = Array.from({ length: columns }, (_, i) => i);
 
     return (
       <View
         style={[
-          styles.widgetCard,
+          styles.masterCard,
           {
             backgroundColor: theme.cardBackground,
             borderColor: theme.borderColor,
           },
         ]}
       >
-        {/* Header: Avatar, Name, Handle */}
-        <View style={styles.profileUserRow}>
-          <Image source={{ uri: user.avatar_url }} style={styles.profileAvatar} />
-          <View style={styles.profileInfo}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Text style={[styles.profileName, { color: theme.textPrimary }]}>
-                {user.name || user.login}
-              </Text>
-              <Ionicons name="checkmark-circle" size={13} color={theme.accent} />
-            </View>
-            <Text style={[styles.profileLogin, { color: theme.accent }]}>
+        {/* 1. Header: Name + Username side by side */}
+        <View style={styles.masterHeader}>
+          <View style={styles.headerTitleRow}>
+            <Text style={[styles.masterName, { color: theme.textPrimary }]} numberOfLines={1}>
+              {user.name || user.login}
+            </Text>
+            <Text style={[styles.masterUsername, { color: theme.textSecondary }]} numberOfLines={1}>
               @{user.login}
             </Text>
           </View>
+          {bioText ? (
+            <Text style={[styles.masterSubline, { color: theme.textSecondary }]} numberOfLines={1}>
+              {bioText}
+            </Text>
+          ) : null}
         </View>
 
-        {/* Bio Snippet */}
-        {user.bio ? (
-          <Text
-            style={[styles.profileBio, { color: theme.textSecondary }]}
-            numberOfLines={2}
+        {/* 2. Full Heatmap with Months, Days, and Horizontal Scroll */}
+        <View style={styles.masterHeatmapSection}>
+          <ScrollView
+            ref={previewScrollRef}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            onScroll={handlePreviewScroll}
+            scrollEventThrottle={16}
+            contentContainerStyle={styles.masterScrollContainer}
+            onContentSizeChange={() => {
+              previewScrollRef.current?.scrollToEnd({ animated: false });
+              setScrollRatio(1);
+            }}
           >
-            {user.bio}
-          </Text>
-        ) : null}
+            <View style={{ flexDirection: 'column' }}>
+              {/* Month Header Row */}
+              <View style={[styles.masterMonthRow, { marginLeft: 22 }]}>
+                {colsArray.map((colIdx) => (
+                  <View
+                    key={colIdx}
+                    style={{
+                      width: CELL_SIZE + CELL_GAP,
+                    }}
+                  >
+                    {monthMap[colIdx] ? (
+                      <Text style={[styles.masterMonthText, { color: theme.textSecondary }]}>
+                        {monthMap[colIdx]}
+                      </Text>
+                    ) : null}
+                  </View>
+                ))}
+              </View>
 
-        {/* Company & Location */}
-        {metaItems.length > 0 ? (
-          <Text style={[styles.profileMeta, { color: theme.textSecondary }]} numberOfLines={1}>
-            {metaItems.join('  •  ')}
-          </Text>
-        ) : null}
+              {/* Day Labels + Grid */}
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={styles.masterDayCol}>
+                  <Text style={[styles.masterDayText, { color: theme.textSecondary }]}>Mon</Text>
+                  <Text style={[styles.masterDayText, { color: theme.textSecondary }]}>Wed</Text>
+                  <Text style={[styles.masterDayText, { color: theme.textSecondary }]}>Fri</Text>
+                </View>
 
-        {/* Stats Grid */}
-        <View style={styles.profileStatsGrid}>
-          <View style={[styles.profileStatTile, { backgroundColor: theme.background }]}>
-            <Text style={[styles.statVal, { color: theme.textPrimary }]}>
-              {formatNumber(user.public_repos)}
-            </Text>
-            <Text style={[styles.statLbl, { color: theme.textSecondary }]}>Repos</Text>
+                <SvgXml xml={svgContent} width={SIX_MONTHS_WIDTH} height={SIX_MONTHS_HEIGHT} />
+              </View>
+            </View>
+          </ScrollView>
+
+          {/* Bottom Scroll Bar Track */}
+          <View style={styles.scrollTrackWrapper}>
+            <View
+              style={[
+                styles.scrollTrack,
+                { backgroundColor: theme.background, borderColor: theme.borderColor },
+              ]}
+            >
+              <View
+                style={[
+                  styles.scrollThumb,
+                  {
+                    backgroundColor: theme.accent,
+                    left: `${scrollRatio * 75}%`,
+                  },
+                ]}
+              />
+            </View>
           </View>
-
-          <View style={[styles.profileStatTile, { backgroundColor: theme.background }]}>
-            <Text style={[styles.statVal, { color: theme.textPrimary }]}>
-              {formatNumber(user.followers)}
-            </Text>
-            <Text style={[styles.statLbl, { color: theme.textSecondary }]}>Followers</Text>
-          </View>
-
-          <View style={[styles.profileStatTile, { backgroundColor: theme.background }]}>
-            <Text style={[styles.statVal, { color: theme.accent }]}>
-              🔥 {contributions.currentStreak}d
-            </Text>
-            <Text style={[styles.statLbl, { color: theme.textSecondary }]}>Streak</Text>
-          </View>
-
-          <View style={[styles.profileStatTile, { backgroundColor: theme.background }]}>
-            <Text style={[styles.statVal, { color: theme.levels[3] }]}>
-              {formatNumber(yearTotal)}
-            </Text>
-            <Text style={[styles.statLbl, { color: theme.textSecondary }]}>{currentYear} Commits</Text>
-          </View>
-        </View>
-
-        {/* Footer */}
-        <View style={styles.profileFooter}>
-          <View
-            style={[
-              styles.statusPill,
-              { backgroundColor: contributions.committedToday ? theme.levels[3] : '#27272a' },
-            ]}
-          >
-            <Text style={styles.statusPillText}>
-              {contributions.committedToday ? 'Active Today ✨' : 'Need Commit ⚡'}
-            </Text>
-          </View>
-          <Text style={[styles.legendBrand, { color: theme.textSecondary }]}>
-            Best: {contributions.longestStreak}d
-          </Text>
         </View>
       </View>
     );
@@ -273,129 +255,122 @@ export function WidgetPreview({
 
   return (
     <View style={styles.container}>
-      <View style={[styles.previewFrame, { backgroundColor: '#09090b', borderColor: theme.borderColor }]}>
-        <View style={styles.frameHeader}>
-          <View style={styles.frameHeaderLeft}>
-            <Ionicons name="phone-portrait-outline" size={13} color={theme.textSecondary} />
-            <Text style={[styles.frameHeaderText, { color: theme.textSecondary }]}>
-              Android Widget Preview ({widgetType === 'ContributionGraph' ? '4x2' : '2x2'})
-            </Text>
-          </View>
-          <TouchableOpacity onPress={onOpenGuide} style={styles.guideBadge}>
-            <Ionicons name="help-circle-outline" size={13} color={theme.textSecondary} />
-            <Text style={[styles.guideBadgeText, { color: theme.textSecondary }]}>Guide</Text>
-          </TouchableOpacity>
-        </View>
+      {/* Actual Widget Display */}
+      {renderWidgetContent()}
 
-        <View style={styles.widgetWrapper}>{renderWidgetContent()}</View>
+      {/* Add to Home Option */}
+      <View style={styles.actionRow}>
+        <TouchableOpacity
+          style={[styles.addToHomeButton, { backgroundColor: '#ffffff' }]}
+          onPress={handlePin}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="add-circle" size={18} color="#09090b" />
+          <Text style={styles.addToHomeButtonText}>Add to Home Screen</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.guideButton, { borderColor: theme.borderColor, backgroundColor: theme.cardBackground }]}
+          onPress={onOpenGuide}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="help-circle-outline" size={17} color={theme.textSecondary} />
+          <Text style={[styles.guideButtonText, { color: theme.textSecondary }]}>Guide</Text>
+        </TouchableOpacity>
       </View>
-
-      <TouchableOpacity
-        style={[styles.pinButton, { backgroundColor: '#ffffff' }]}
-        onPress={handlePin}
-        activeOpacity={0.85}
-      >
-        <Ionicons name="pin" size={15} color="#09090b" />
-        <Text style={styles.pinButtonText}>Pin to Android Home Screen</Text>
-      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 10,
+    marginVertical: 4,
     gap: 12,
   },
-  previewFrame: {
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 14,
-  },
-  frameHeader: {
+  actionRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 10,
     alignItems: 'center',
-    marginBottom: 12,
   },
-  frameHeaderLeft: {
+  addToHomeButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 13,
+    borderRadius: 12,
+  },
+  addToHomeButtonText: {
+    color: '#09090b',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  guideButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
-  },
-  frameHeaderText: {
-    fontSize: 11,
-    fontWeight: '500',
-  },
-  guideBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    paddingVertical: 13,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#27272a',
   },
-  guideBadgeText: {
-    fontSize: 11,
-    fontWeight: '500',
-  },
-  widgetWrapper: {
-    marginVertical: 2,
-  },
-  widgetCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 14,
-  },
-  widgetHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  miniAvatar: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-  },
-  widgetUserHandle: {
+  guideButtonText: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
   },
-  activeTag: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+  masterCard: {
+    borderRadius: 18,
+    borderWidth: 1.5,
+    padding: 16,
+    gap: 12,
   },
-  activeTagText: {
-    color: '#ffffff',
-    fontSize: 9,
-    fontWeight: '700',
+  masterHeader: {
+    gap: 2,
   },
-  headerRight: {
+  headerTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  streakPill: {
-    fontSize: 12,
+  masterName: {
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  masterUsername: {
+    fontSize: 13,
     fontWeight: '700',
   },
-  statMuted: {
-    fontSize: 11,
+  masterSubline: {
+    fontSize: 10.5,
+    fontWeight: '500',
   },
-  heatmapBox: {
-    marginVertical: 4,
+  masterHeatmapSection: {
+    marginVertical: 2,
   },
-  heatmapScrollContainer: {
+  masterScrollContainer: {
     paddingVertical: 4,
+  },
+  masterMonthRow: {
+    flexDirection: 'row',
+    height: 14,
+    marginBottom: 3,
+  },
+  masterMonthText: {
+    fontSize: 8,
+    fontWeight: '700',
+  },
+  masterDayCol: {
+    width: 22,
+    height: SIX_MONTHS_HEIGHT,
+    justifyContent: 'space-between',
+    paddingVertical: 2,
+  },
+  masterDayText: {
+    fontSize: 8,
+    fontWeight: '600',
   },
   scrollTrackWrapper: {
     marginTop: 6,
@@ -417,120 +392,26 @@ const styles = StyleSheet.create({
     width: '25%',
     borderRadius: 2,
   },
-  scrollBarLegend: {
+  masterStatsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 2,
+    alignItems: 'flex-start',
+    marginTop: 4,
+    marginBottom: 2,
   },
-  scrollLegendText: {
-    fontSize: 9,
-    fontWeight: '500',
-  },
-  scrollLegendCenter: {
-    fontSize: 9,
-    fontWeight: '700',
-  },
-  widgetFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  legendBrand: {
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  legendRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
-  legendText: {
-    fontSize: 9,
-  },
-  legendBox: {
-    width: 9,
-    height: 9,
-    borderRadius: 2,
-  },
-  profileUserRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 10,
-  },
-  profileAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-  },
-  profileInfo: {
+  masterStatCol: {
     flex: 1,
+    flexDirection: 'column',
+    alignItems: 'flex-start',
   },
-  profileName: {
-    fontSize: 14,
-    fontWeight: '700',
+  profileBigStatNumber: {
+    fontSize: 19,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
-  profileLogin: {
-    fontSize: 11,
-  },
-  profileStatsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginVertical: 4,
-  },
-  profileStatTile: {
-    width: '48%',
-    borderRadius: 8,
-    padding: 8,
-    alignItems: 'center',
-  },
-  statVal: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  statLbl: {
-    fontSize: 10,
+  profileBigStatLabel: {
+    fontSize: 9.5,
     marginTop: 2,
-  },
-  profileBio: {
-    fontSize: 10,
-    lineHeight: 14,
-    marginBottom: 4,
-  },
-  profileMeta: {
-    fontSize: 9,
-    marginBottom: 4,
-  },
-  statusPill: {
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  statusPillText: {
-    color: '#ffffff',
-    fontSize: 9,
-    fontWeight: '700',
-  },
-  profileFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  pinButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: 10,
-  },
-  pinButtonText: {
-    color: '#09090b',
-    fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '500',
   },
 });

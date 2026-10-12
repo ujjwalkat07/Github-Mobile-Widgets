@@ -79,13 +79,61 @@ export function calculateStreaks(days: ContributionDay[]): {
 }
 
 export function formatNumber(num: number): string {
+  if (!num || isNaN(num)) return '0';
   if (num >= 1000000) {
-    return (num / 1000000).toFixed(1) + 'M';
+    const val = (num / 1000000).toFixed(1).replace(/\.0$/, '');
+    return `${val}m`;
   }
   if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'k';
+    const val = (num / 1000).toFixed(1).replace(/\.0$/, '');
+    return `${val}k`;
   }
   return num.toString();
+}
+
+export function getActiveDaysCount(contributions: ContributionDay[]): number {
+  return (contributions || []).filter((d) => d && d.count > 0).length;
+}
+
+export function getSinceYear(createdAt?: string | null): number {
+  if (!createdAt) return new Date().getFullYear();
+  try {
+    const y = new Date(createdAt).getFullYear();
+    return isNaN(y) ? new Date().getFullYear() : y;
+  } catch {
+    return new Date().getFullYear();
+  }
+}
+
+export function getMonthHeaders(
+  contributions: ContributionDay[],
+  columns: number
+): { col: number; label: string }[] {
+  const requiredDays = columns * 7;
+  const recentDays = contributions.slice(-requiredDays);
+  while (recentDays.length < requiredDays) {
+    recentDays.unshift({ date: '', count: 0, level: 0 });
+  }
+
+  const result: { col: number; label: string }[] = [];
+  let lastMonth = '';
+
+  for (let col = 0; col < columns; col++) {
+    for (let row = 0; row < 7; row++) {
+      const idx = col * 7 + row;
+      const d = recentDays[idx];
+      if (d && d.date) {
+        const m = new Date(d.date).toLocaleDateString('en-US', { month: 'short' });
+        if (m !== lastMonth) {
+          lastMonth = m;
+          result.push({ col, label: m });
+        }
+        break;
+      }
+    }
+  }
+
+  return result;
 }
 
 export function generateHeatmapSvg({

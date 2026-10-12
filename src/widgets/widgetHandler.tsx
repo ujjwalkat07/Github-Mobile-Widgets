@@ -3,7 +3,7 @@ import type { WidgetTaskHandlerProps } from 'react-native-android-widget';
 import { AppStorage } from '../storage';
 import { GitHubApi } from '../api';
 import { getTheme } from '../themes';
-import { ContributionWidget } from './ContributionWidget';
+import { MasterCardWidget } from './MasterCardWidget';
 import { ProfileWidget } from './ProfileWidget';
 
 export async function widgetHandler(props: WidgetTaskHandlerProps) {
@@ -31,11 +31,13 @@ export async function widgetHandler(props: WidgetTaskHandlerProps) {
           user={user}
           contributions={contributions}
           theme={theme}
+          width={widgetInfo.width}
+          height={widgetInfo.height}
         />
       );
     } else {
       renderWidget(
-        <ContributionWidget
+        <MasterCardWidget
           user={user}
           contributions={contributions}
           theme={theme}
